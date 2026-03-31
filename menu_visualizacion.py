@@ -15,7 +15,6 @@ Incluye:
     8. Salir
 """
 import re
-from collections import Counter
 import matplotlib.pyplot as plt
 import pymysql
 from pymongo import MongoClient
@@ -30,9 +29,7 @@ from configuracion import (
     MYSQL_DATABASE,
     MONGO_CONNECTION_STRING,
     MONGO_DATABASE,
-    MONGO_COLLECTION,
-    DATASETS,
-    POPULARIDAD_TOP_N
+    MONGO_COLLECTION
 )
 
 # Coneciones.
@@ -209,8 +206,8 @@ def mostrar_popularidad_articulos():
         
         conteos = [fila[1] for fila in resultados]
 
-        if len(conteos) > POPULARIDAD_TOP_N:
-            conteos = conteos[:POPULARIDAD_TOP_N]
+        if len(conteos) > 1000:     # Tomamos 1000 como limite para los mas relevantes.
+            conteos = conteos[:1000]
         
         posiciones = list(range(1, len(conteos) + 1))
 
@@ -374,7 +371,7 @@ def mostrar_histograma_reviews_usuario():
         reviews_por_usuario = [fila[1] for fila in resultados]
 
         plt.figure(figsize=(10, 6))
-        plt.hist(reviews_por_usuario, bins=50)
+        plt.hist(reviews_por_usuario, bins=700)
         plt.title('Histograma de reviews por usuario')
         plt.xlabel('Numero de reviews')
         plt.ylabel('Numero de usuarios')
@@ -395,7 +392,7 @@ def limpiar_palabras(texto:str):
 
     palabras_validas = []
     for palabra in palabras:
-        if len(palabra) >= 4:
+        if len(palabra) >= 4:       # No conectores.
             palabras_validas.append(palabra)
     
     return palabras_validas
@@ -490,7 +487,7 @@ def main():
     """
     while True:
         mostrar_menu()
-        opcion = input('Selecciona una opccion: ').strip()
+        opcion = input('Selecciona una opcion: ').strip()
         
         if opcion == '1':
             mostrar_reviews_por_anio()

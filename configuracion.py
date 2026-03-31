@@ -28,13 +28,19 @@ MONGO_COLLECTION = 'reviews_raw'
 
 
 # Rutas de los datasets.
+# Rutas de los datasets.
 DATASETS = {
-    'Toys and Games': 'C:/Users/ctr72/Documents/bases/proyecto/Toys_and_Games_5.json',
-    'Video Games': 'C:/Users/ctr72/Documents/bases/proyecto/Video_Games_5.json',
-    'Digital Music': 'C:/Users/ctr72/Documents/bases/proyecto/Digital_Music_5.json',
-    'Musical Instruments': 'C:/Users/ctr72/Documents/bases/proyecto/Musical_Instruments_5.json'
+    'Toys and Games': '',
+    'Video Games': '',
+    'Digital Music': '',
+    'Musical Instruments': ''
 }
+# DATASETS = {
+#     'Toys and Games': 'C:/Users/ctr72/Documents/bases/proyecto/Toys_and_Games_5.json',
+#     'Video Games': 'C:/Users/ctr72/Documents/bases/proyecto/Video_Games_5.json',
+#     'Digital Music': 'C:/Users/ctr72/Documents/bases/proyecto/Digital_Music_5.json',
+#     'Musical Instruments': 'C:/Users/ctr72/Documents/bases/proyecto/Musical_Instruments_5.json'
+# }
 
 # Parametros de carga.
 BATCH_SIZE = 1000
-POPULARIDAD_TOP_N = 1000

@@ -204,7 +204,8 @@ def crear_tablas_mysql() -> None:
                 UNIQUE KEY uq_products_asin_type (asin, id_product_type),
                 KEY idx_products_type (id_product_type),
                 FOREIGN KEY (id_product_type) REFERENCES product_types(id_product_type)
-            )"""
+            );
+            """
             # KEY es un indice normal. Lo añadimos para que las consultas luego 
             # en visualizacion.py sean mas rapidas.
     
@@ -218,7 +219,7 @@ def crear_tablas_mysql() -> None:
                 helpful_yes INT,
                 helpful_total INT,
                 unix_review_time INT,
-                review_date DATE
+                review_date DATE,
                 PRIMARY KEY (id_review),
                 UNIQUE KEY uq_reviews_review_uid (review_uid),
                 KEY idx_reviews_user (id_user),
