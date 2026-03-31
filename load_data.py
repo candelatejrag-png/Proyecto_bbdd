@@ -31,8 +31,7 @@ from configuracion import (
     MONGO_DATABASE,
     MONGO_COLLECTION,
     DATASETS,
-    batch_size_mysql,
-    batch_size_mongo
+    BATCH_SIZE
 )
 
 # Conexiones.
@@ -108,9 +107,11 @@ def extraccion_helpful(review:dict):
 
 def construccion_review_uid(product_type_name:str, reviewer_id_original:str, asin:str, unix_review_time):
     """
-    Construimos un identificador logico estable para cada review.
+    Construimos un identificador para cada review.
+    Va a ser UNICO.
+    Asi podremos enlazar la misma review entre MySQL y MongoDB.
     """
-    unix_part = '' if unix_review_time is None else str(unix_review_time)
+    unix_part = '' if unix_review_time is None else str(unix_review_time)       # Por si devolviera un error la conversion a fecha.
     
     return f'{product_type_name}|{reviewer_id_original}|{asin}|{unix_part}'
 
@@ -170,6 +171,9 @@ def crear_tablas_mysql() -> None:
                         UNIQUE KEY uq_product_types_name (product_type_name)
                     );
                     """
+    # Nota de autoria: para hacer nuestro programa mas robusto, 
+    #                  usamos UNIQUE KEY para poder identificar 
+    #                  el error facilmente si insertamos un duplicado.
     
     create_users = """
             CREATE TABLE users (
@@ -182,38 +186,38 @@ def crear_tablas_mysql() -> None:
     
     create_user_names = """
             CREATE TABLE user_names (
-                id_user_name BIGINT NOT NULL AUTO_INCREMENT,
+                id_user_name INT NOT NULL AUTO_INCREMENT,
                 id_user INT NOT NULL,
                 reviewer_name VARCHAR(255) NOT NULL,
                 PRIMARY KEY (id_user_name),
                 UNIQUE KEY uq_user_name_user_name (id_user, reviewer_name),
-                CONSTRAINT fk_user_names_user
-                    FOREIGN KEY (id_user) REFERENCES users(id_user)
+                FOREIGN KEY (id_user) REFERENCES users(id_user)
             );
             """
     
     create_products = """
             CREATE TABLE products (
-                id_product BIGINT NOT NULL AUTO_INCREMENT,
+                id_product INT NOT NULL AUTO_INCREMENT,
                 asin VARCHAR(30) NOT NULL,
                 id_product_type INT NOT NULL,
                 PRIMARY KEY (id_product),
                 UNIQUE KEY uq_products_asin_type (asin, id_product_type),
                 KEY idx_products_type (id_product_type),
-                CONSTRAINT fk_products_product_type
-                    FOREIGN KEY (id_product_type) REFERENCES product_types(id_product_type)
+                FOREIGN KEY (id_product_type) REFERENCES product_types(id_product_type)
             )"""
+            # KEY es un indice normal. Lo añadimos para que las consultas luego 
+            # en visualizacion.py sean mas rapidas.
     
     create_reviews = """
             CREATE TABLE reviews (
-                id_review BIGINT NOT NULL AUTO_INCREMENT,
+                id_review INT NOT NULL AUTO_INCREMENT,
                 review_uid VARCHAR(220) NOT NULL,
                 id_user INT NOT NULL,
-                id_product BIGINT NOT NULL,
-                overall DECIMAL(2, 1),
+                id_product INT NOT NULL,
+                overall FLOAT,
                 helpful_yes INT,
                 helpful_total INT,
-                unix_review_time BIGINT,
+                unix_review_time INT,
                 review_date DATE
                 PRIMARY KEY (id_review),
                 UNIQUE KEY uq_reviews_review_uid (review_uid),
@@ -221,12 +225,12 @@ def crear_tablas_mysql() -> None:
                 KEY idx_reviews_product (id_product),
                 KEY idx_reviews_date (review_date),
                 KEY idx_reviews_unix_time (unix_review_time),
-                CONSTRAINT fk_reviews_user
-                    FOREIGN KEY (id_user) REFERENCES users(id_user),
-                CONSTRAINT fk_reviews_product
-                    FOREIGN KEY (id_product) REFERENCES products(id_product)
+                FOREIGN KEY (id_user) REFERENCES users(id_user),
+                FOREIGN KEY (id_product) REFERENCES products(id_product)
             );
             """
+            # Otra vez, añadimos indices (KEY) en columnas que luego usaremos 
+            # para hacer JOINs o filtrar reviews, para mejorar el rendimiento.
     
     try:
         with conexion.cursor() as cursor:
@@ -339,9 +343,9 @@ def insertar_lote_mongo(collection, batch_reviews_mongo):
 
 
 # Carga principal.
-def carga_datasets(product_type_map: dict) -> None:
+def cargar_datasets(product_type_map:dict) -> None:
     """
-    Cargamos los 4 datasets linea a linea.
+    Cargamos los 4 datasers linea a linea.
     Insertamos en MySQL la parte estructurada y en MongoDB la review documental.
     """
     print('Carga -> Iniciando proceso completo de carga...')
@@ -357,7 +361,7 @@ def carga_datasets(product_type_map: dict) -> None:
     # Para no repetir nombres ya insertados del mismo usuario.
     user_name_seen = set()
 
-    # Buffers.
+    # Para no insertar cada vez.
     batch_user_names = []
     batch_reviews = []
     batch_reviews_mongo = []
@@ -365,15 +369,14 @@ def carga_datasets(product_type_map: dict) -> None:
     total_reviews = 0
 
     sql_insert_user = """
-        INSERT INTO users (reviewer_id_original)
-        VALUES (%s);
-    """
-
+                INSERT INTO users (reviewer_id_original)
+                VALUES (%s);
+                """
+    
     sql_insert_product = """
-        INSERT INTO products (asin, id_product_type)
-        VALUES (%s, %s);
-    """
-
+                INSERT INTO products (asin, id_product_type)
+                VALUES (%s, %s);
+                """
     try:
         with conexion_mysql.cursor() as cursor:
             for product_type_name, file_path in DATASETS.items():
@@ -381,6 +384,8 @@ def carga_datasets(product_type_map: dict) -> None:
                 id_product_type = product_type_map[product_type_name]
 
                 with open(file_path, 'r', encoding='utf-8', errors='replace') as file:
+                    # Usamos errors=replace de adquisicion por si hubiera caracteres raros
+                    # ya que no lo podemos asegurar con files tan grandes.
                     for line in file:
                         line = line.strip()
                         if not line:
@@ -392,6 +397,7 @@ def carga_datasets(product_type_map: dict) -> None:
                         reviewer_name = limpieza_basica(review.get('reviewerName'))
                         asin = limpieza_basica(review.get('asin'))
 
+                        # Si falta el id de usuario o de producto, no guardamos la linea.
                         if reviewer_id_original == '' or asin == '':
                             continue
 
@@ -401,17 +407,15 @@ def carga_datasets(product_type_map: dict) -> None:
                         review_date = formateo_review_time(review_time_original)
                         helpful_yes, helpful_total = extraccion_helpful(review)
 
-                        review_uid = construccion_review_uid(
-                            product_type_name,
-                            reviewer_id_original,
-                            asin,
-                            unix_review_time
-                        )
+                        review_uid = construccion_review_uid(product_type_name, reviewer_id_original, asin, unix_review_time)
 
                         # Usuario.
                         if reviewer_id_original not in user_map:
                             cursor.execute(sql_insert_user, (reviewer_id_original,))
-                            id_user = cursor.lastrowid
+                            id_user = cursor.lastrowid          # Nota de autoria: para poder añadirlo a nuestro diccionario correctamente, usamos .lastrowid
+                                                                #                  para obtener el ultimo identificador (generado en la linea anterior en la insercion)
+                                                                #                  y asi podemos usar tambien ese mismo id en otras tablas. (se podria hacer con una  
+                                                                #                  consulta pero asi es mas rapido).
                             user_map[reviewer_id_original] = id_user
                         else:
                             id_user = user_map[reviewer_id_original]
@@ -433,46 +437,35 @@ def carga_datasets(product_type_map: dict) -> None:
                             id_product = product_map[product_key]
 
                         # Review para MySQL.
-                        batch_reviews.append((
-                            review_uid,
-                            id_user,
-                            id_product,
-                            overall,
-                            helpful_yes,
-                            helpful_total,
-                            unix_review_time,
-                            review_date
-                        ))
-     
+                        batch_reviews.append((review_uid, id_user, id_product, overall, helpful_yes, helpful_total, unix_review_time, review_date))
+
                         # Review para MongoDB.
-                        mongo_doc = {
-                            'review_uid': review_uid,
-                            'product_type': product_type_name,
-                            'mysql_keys': {
-                                'reviewer_id_original': reviewer_id_original,
-                                'asin': asin
-                            },
-                            'review_document': {
-                                'reviewerID': review.get('reviewerID'),
-                                'asin': review.get('asin'),
-                                'reviewerName': review.get('reviewerName'),
-                                'helpful': review.get('helpful'),
-                                'reviewText': review.get('reviewText'),
-                                'overall': review.get('overall'),
-                                'summary': review.get('summary'),
-                                'unixReviewTime': review.get('unixReviewTime'),
-                                'reviewTime': review.get('reviewTime')
-                            }
-                        }
+                        mongo_doc = {'review_uid': review_uid,
+                                     'product_type': product_type_name,
+                                     'mysql_keys': {'reviewer_id_original': reviewer_id_original,
+                                                    'asin': asin
+                                                    },
+                                     'review_document': {'reviewerID': review.get('reviewerID'),
+                                                         'asin': review.get('asin'),
+                                                         'reviewerName': review.get('reviewerName'),
+                                                         'helpful': review.get('helpful'),
+                                                         'reviewText': review.get('reviewText'),
+                                                         'overall': review.get('overall'),
+                                                         'summary': review.get('summary'),
+                                                         'unixReviewTime': review.get('unixReviewTime'),
+                                                         'reviewTime': review.get('reviewTime'),
+                                                         }
+                                    }
+                        
                         batch_reviews_mongo.append(mongo_doc)
 
                         total_reviews += 1
 
                         # Insercion por lotes.
-                        if len(batch_user_names) >= batch_size_mysql or len(batch_reviews) >= BATCH_SIZE_MYSQL:
+                        if len(batch_user_names) >= BATCH_SIZE or len(batch_reviews) >= BATCH_SIZE:
                             insertar_lotes_mysql(cursor, batch_user_names, batch_reviews)
-
-                        if len(batch_reviews_mongo) >= batch_size_mongo:
+                        
+                        if len(batch_reviews_mongo) >= BATCH_SIZE:
                             insertar_lote_mongo(collection_mongo, batch_reviews_mongo)
 
                 insertar_lotes_mysql(cursor, batch_user_names, batch_reviews)
@@ -496,7 +489,7 @@ def main() -> None:
     """
     Ejecutamos todo el proceso de creacion y carga.
     """
-    print('--- INICIO DEL PROCESO DE CARGA ---')
+    print ('--- INICIO DEL PROCESO DE CARGA ---')
 
     crear_bbdd_mysql()
     borrar_tablas_mysql()
@@ -504,7 +497,7 @@ def main() -> None:
     preparacion_mongodb()
 
     product_type_map = insertar_product_types()
-    carga_datasets(product_type_map)
+    cargar_datasets(product_type_map)
 
     print('--- FIN DEL PROCESO DE CARGA ---')
 

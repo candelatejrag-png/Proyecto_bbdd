@@ -36,5 +36,5 @@ DATASETS = {
 }
 
 # Parametros de carga.
-batch_size_mysql = 1000
-batch_size_mongo = 1000
+BATCH_SIZE = 1000
+POPULARIDAD_TOP_N = 1000
