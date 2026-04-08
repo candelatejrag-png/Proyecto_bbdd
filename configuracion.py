@@ -16,7 +16,7 @@ Aqui se centralizan:
 # MySQL.
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'pythonista'
+MYSQL_PASSWORD = ''
 MYSQL_DATABASE = 'AmazonReviewsProyecto'
 MYSQL_PORT = 3306
 
@@ -26,14 +26,18 @@ MONGO_CONNECTION_STRING = 'mongodb://localhost:27017'
 MONGO_DATABASE = 'AmazonReviewsProyecto'
 MONGO_COLLECTION = 'reviews_raw'
 
+# Neo4J
+NEO4J_URI = "neo4j://localhost:7687"
+NEO4J_PASSWORD = ''
+
 
 # Rutas de los datasets.
 # Rutas de los datasets.
 DATASETS = {
-    'Toys and Games': '',
-    'Video Games': '',
-    'Digital Music': '',
-    'Musical Instruments': ''
+    'Toys and Games': 'Toys_and_Games_5.json',
+    'Video Games': 'Video_Games_5.json',
+    'Digital Music': 'Digital_Music_5.json',
+    'Musical Instruments': 'Musical_Instruments_5.json'
 }
 # DATASETS = {
 #     'Toys and Games': 'C:/Users/ctr72/Documents/bases/proyecto/Toys_and_Games_5.json',
