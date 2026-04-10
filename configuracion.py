@@ -48,3 +48,8 @@ DATASETS = {
 
 # Parametros de carga.
 BATCH_SIZE = 1000
+
+
+# Exportacion para visualizaciones externas.
+EXPORTS_DIR = 'exports_visualizacion'
+TP_N_POPULARIDAD_EXPORT = 1000
