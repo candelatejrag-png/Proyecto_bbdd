@@ -16,7 +16,7 @@ Aqui se centralizan:
 # MySQL.
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
-MYSQL_PASSWORD = ''
+MYSQL_PASSWORD = 'gabriela.R2006'
 MYSQL_DATABASE = 'AmazonReviewsProyecto'
 MYSQL_PORT = 3306
 

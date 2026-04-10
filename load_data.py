@@ -12,7 +12,7 @@ En este fichero:
     6. Insertamos la review original en MongoDB
 
 """
-# Imports.
+# Importamos las librerías necesarias
 import json
 from datetime import datetime
 
@@ -21,6 +21,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from pymysql.connections import Connection
 
+# Importamos las variables de otros módulos necesarias
 from configuracion import (
     MYSQL_HOST,
     MYSQL_PORT,
