@@ -1,7 +1,7 @@
 """
 Nombres:
-    - Gabriela Romero
-    - Candela Tejedo
+    - Gabriela Romero Martin
+    - Candela Tejedo Raga
 
 Genera ficheros CSV para crear 3 visualizaciones en Tableau:
     1. Reviews por año

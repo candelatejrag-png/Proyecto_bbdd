@@ -1,7 +1,7 @@
 """
 Nombres:
-    - Gabriela Romero
-    - Candela Tejedo
+    - Gabriela Romero Martin
+    - Candela Tejedo Raga
 
 Dado un reviewerID original y un tipo de producto,
 devuelve los 10 articulos mas populares que el usuario no ha consumido.
