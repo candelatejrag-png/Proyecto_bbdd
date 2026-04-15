@@ -14,9 +14,7 @@ from configuracion import (
     MYSQL_PORT,
     MYSQL_USER,
     MYSQL_PASSWORD,
-    MYSQL_DATABASE,
-    EXPORTS_DIR,
-    TP_N_POPULARIDAD_EXPORT
+    MYSQL_DATABASE
 )
 
 
@@ -45,18 +43,17 @@ def pedir_tipo_producto():
         '3': 'Toys and Games',
         '4': 'Video Games'
     }
+    while True:
+        print(f'\nSelecciona el tipo de producto:')
+        for clave, valor in opciones.items():
+            print(f'{clave}. {valor}')
 
-    print(f'\nSelecciona el tipo de producto:')
-    for clave, valor in opciones.items():
-        print(f'{clave}. {valor}')
+        opcion = input('Opcion: ').strip()
 
-    opcion = input('Opcion: ').strip()
+        if opcion in opciones:
+            return opciones[opcion]
 
-    if opcion in opciones:
-        return opciones[opcion]
-
-    print('Opcion no valida.')
-    return None !! quiza poner para que siga preguntando hasta funcionar
+        print('Opcion no valida. Intentalo de nuevo')
 
 
 # Recomendacion.
@@ -76,11 +73,11 @@ def recomendar_top_10_no_consumidos(reviewer_id_original:str, product_type_name:
                     """
         
         with conexion.cursor() as cursor:
-            cursor.execute(sql_usuario, [reviewer_id_original])
+            cursor.execute(sql_usuario, (reviewer_id_original,))
             fila_usuario = cursor.fetchone()
         
         if fila_usuario is None:
-            print('El usuario no existe en la base de datos.')
+            print('\nEl usuario no existe en la base de datos.')
             return
         
         id_user = fila_usuario[0]
@@ -93,18 +90,21 @@ def recomendar_top_10_no_consumidos(reviewer_id_original:str, product_type_name:
                         WHERE pt.product_type_name = %s
                             AND p.id_product NOT IN (SELECT DISTINCT r2.id_product
                                                      FROM reviews r2
-                                                     WHERE r2.id_user = %s) 
+                                                     JOIN products p2 ON r2.id_product = p2.id_product
+                                                     JOIN product_types pt2 ON p2.id_product_type = pt2.id_product_type
+                                                     WHERE r2.id_user = %s 
+                                                        AND pt2.product_type_name = %s) 
                         GROUP BY p.id_product, p.asin
-                        ORDER BY total_reviews DESC
+                        ORDER BY total_reviews DESC, p.asin
                         LIMIT 10;
                         """
         
         with conexion.cursor() as cursor:
-            cursor.execute(sql_recomendacion, [product_type_name, id_user])
+            cursor.execute(sql_recomendacion, (product_type_name, id_user, product_type_name)) porque 2 product type name??
             resultados = cursor.fetchall()
 
         if not resultados:
-            print('No hay recomendaciones disponibles para este usuario y categoria')
+            print('\nNo hay recomendaciones disponibles para este usuario y categoria')
             return
         
         print(f'\nTop 10 articulos recomendados no consumidos:')
@@ -130,9 +130,6 @@ def main():
         return
     
     product_type_name = pedir_tipo_producto()
-    if product_type_name is None:
-        return
-    
     recomendar_top_10_no_consumidos(reviewer_id_original, product_type_name)
 
 

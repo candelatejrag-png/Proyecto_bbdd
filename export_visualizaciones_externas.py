@@ -73,6 +73,7 @@ def exportar_reviews_por_anio():
             FROM reviews r
             JOIN products p ON r.id_product = p.id_product 
             JOIN product_types pt ON p.id_product_type = pt.id_product_type
+            WHERE r.review_date IS NOT NULL
             GROUP BY pt.product_type_name, YEAR(r.review_date)
             ORDER BY pt.product_type_name, YEAR(r.review_date);
             """
@@ -91,6 +92,8 @@ def exportar_reviews_por_anio():
 def exportar_popularidad_articulos():
     """
     Exporta un CSV con popularidad de articulos por categoria.
+    Hemos limitado el numero de articulo exportados por categoria para que 
+    el fichero no sea demasiado grande.
     """
     conexion = get_mysql_connection()
 
@@ -129,27 +132,28 @@ def exportar_popularidad_articulos():
 
 
 # Export 3.
-def exportar_media_nota_por_categoria():
+def exportar_histograma_por_nota():
     """
-    Exporta un CSV con la media de nota por categoria.
+    Exporta un CSV con numero de reviews por nota y categoria
     """
     conexion = get_mysql_connection()
 
     try:
         sql = """
-            SELECT pt.product_type_name, AVG(r.overall) AS media_nota
+            SELECT pt.product_type_name, r.overall, COUNT(*) AS total_reviews
             FROM reviews r
             JOIN products p ON r.id_product = p.id_product 
             JOIN product_types pt ON p.id_product_type = pt.id_product_type
-            GROUP BY pt.product_type_name
-            ORDER BY pt.product_type_name;
+            WHERE r.overall IS NOT NULL
+            GROUP BY pt.product_type_name, r.overall
+            ORDER BY pt.product_type_name, r.overall;
             """
         
         with conexion.cursor() as cursor:
             cursor.execute(sql)
             filas = cursor.fetchall()
         
-        escribir_csv('media_nota_por_categoria.csv', ['product_type_name', 'media_nota'], filas)
+        escribir_csv('histograma_por_nota.csv', ['product_type_name', 'overall', 'total_reviews'], filas)
     
     finally:
         conexion.close()   
@@ -164,7 +168,7 @@ def main():
     print('Generando CSV para visualizacion externa...')
     exportar_reviews_por_anio()
     exportar_popularidad_articulos()
-    exportar_media_nota_por_categoria()
+    exportar_histograma_por_nota()
     print('Proceso completado.')
 
 

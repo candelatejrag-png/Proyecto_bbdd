@@ -511,32 +511,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    def evolucion_reviews_todas_categorias(conexion):
-    cursor = conexion.cursor()
-    categorias = ["Videogames", "Toys", "Instruments", "Music"]
-
-    for categoria in categorias:
-        sql = """
-            SELECT  r.reviewTime, COUNT(*) AS num_reviews
-            FROM review r
-            INNER JOIN categorias c ON c.id_category = r.id_category
-            WHERE c.name_category = %s AND r.reviewTime IS NOT NULL
-            GROUP BY r.reviewTime
-            ORDER BY r.reviewTime
-            """
-        cursor.execute(sql, (categoria,))
-        resultados = cursor.fetchall()
-    
-        reviews_acumuladas = 0
-        num_reviews = []
-        tiempo = []
-        for fila in resultados:
-            reviews_acumuladas += fila[1]  #acumulo reviews 
-            tiempo.append(fila[0])
-            num_reviews.append(reviews_acumuladas)   
-
-        plt.plot(tiempo, num_reviews, label = categoria)
-
-    cursor.close()
             

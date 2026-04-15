@@ -197,7 +197,7 @@ def cargar_dataset(tipo: str, ruta: str):
 
                     # limpiamos los datos
                     rev_id_orig = limpieza_basica(rev.get('reviewerID'))
-                    rev_name = limpieza_basica(rev.get('reviewername'))
+                    rev_name = limpieza_basica(rev.get('reviewerName'))
                     asin = limpieza_basica(rev.get('asin'))
 
                     if rev_id_orig == '' or asin == '':     # Si estos campos están vacíos no hay nada que insertar
