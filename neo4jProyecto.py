@@ -215,7 +215,7 @@ def busqueda_op1(driver: Driver)-> str:
         result = session.run(consulta)
         usuario = result.single()
     if usuario is not None:
-        return f'El usuario {usuario['id_user']} cuyo id original es {usuario['reviewer_id_original']} es el que tiene más vecinos, tiene {usuario['num_vecinos']} vecinos. '
+        return f"El usuario {usuario['id_user']} cuyo id original es {usuario['reviewer_id_original']} es el que tiene más vecinos, tiene {usuario['num_vecinos']} vecinos."
     else: 
         return 'No se ha encontrado ningún usuario. '
 
