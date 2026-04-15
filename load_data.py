@@ -304,7 +304,7 @@ def insertar_product_types() -> dict:
         conexion.close()
 
 
-# inserciones en lote.
+# Inserciones en lote.
 def insertar_lotes_mysql(cursor, batch_user_names, batch_reviews):
     """
     Inserta los lotes pendientes de MySQL.

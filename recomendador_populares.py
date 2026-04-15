@@ -44,7 +44,7 @@ def pedir_tipo_producto():
         '4': 'Video Games'
     }
     while True:
-        print(f'\nSelecciona el tipo de producto:')
+        print(f'Selecciona el tipo de producto:')
         for clave, valor in opciones.items():
             print(f'{clave}. {valor}')
 
@@ -100,21 +100,23 @@ def recomendar_top_10_no_consumidos(reviewer_id_original:str, product_type_name:
                         """
         
         with conexion.cursor() as cursor:
-            cursor.execute(sql_recomendacion, (product_type_name, id_user, product_type_name)) porque 2 product type name??
+            cursor.execute(sql_recomendacion, (product_type_name, id_user, product_type_name))
             resultados = cursor.fetchall()
 
         if not resultados:
             print('\nNo hay recomendaciones disponibles para este usuario y categoria')
+            # podria ocurrir si el usuario hubiera consumido todos los articulos para esa categoria concreta.
             return
         
-        print(f'\nTop 10 articulos recomendados no consumidos:')
+        print(f'\nTop 10 articulos recomendados para:')
         print(f'Usuario: {reviewer_id_original}')
         print(f'Tipo de producto: {product_type_name}\n')
 
         for i, fila in enumerate(resultados, start=1):
             asin = fila[0]
             total_reviews = fila[1]
-            print(f'{i}. ASIN:{asin} | Popularidad (reviews): {total_reviews}')
+            print(f'{i}. ASIN: {asin} | Popularidad (reviews): {total_reviews}')
+        print()
 
     finally:
         conexion.close()
@@ -124,14 +126,21 @@ def main():
     """
     Pide los datos al usuario y muestra las recomendaciones.
     """
-    reviewer_id_original = input('introduce el reviewerID original: ').strip()
-    if reviewer_id_original == '':
-        print('El reviewerID no puede estar vacio.')
-        return
-    
-    product_type_name = pedir_tipo_producto()
-    recomendar_top_10_no_consumidos(reviewer_id_original, product_type_name)
+    print('\n--- RECOMENDADOR DE ARTICULOS POPULARES NO CONSUMIDOS ---\n')
+    print('El programa seguira en ejecucion hasta que pulses CTRL+C')
+    print('Puedes introducir otro usuario para obtener sus recomendaciones\n')
+    try:
+        while True: 
+            reviewer_id_original = input('Introduce el reviewerID original: ').strip()
+            if reviewer_id_original == '':
+                print('El reviewerID no puede estar vacio.')
+                continue
+            
+            product_type_name = pedir_tipo_producto()
+            recomendar_top_10_no_consumidos(reviewer_id_original, product_type_name)
 
+    except KeyboardInterrupt:
+        print('\nPrograma finalizado por el usuario')
 
 if __name__ == '__main__':
     main()

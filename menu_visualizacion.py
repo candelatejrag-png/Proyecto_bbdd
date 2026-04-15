@@ -335,7 +335,7 @@ def mostrar_evolucion_reviews_tiempo():
         plt.figure(figsize=(10, 6))
         plt.plot(tiempos, acumulado)
         plt.title(f'Evolucion de las reviews a lo largo del tiempo - {product_type_name}')
-        plt.xlabel('Tiempo (unic timestamp)')
+        plt.xlabel('Tiempo')
         plt.ylabel('Numero acumulado de reviews')
         plt.tight_layout()
         plt.show()
