@@ -470,7 +470,7 @@ def obtener_articulos(conexion: pymysql.connect):
     articulos = '''
     SELECT p.id_product, p.asin, pt.product_type_name, COUNT(r.id_review) AS num_reviews
     FROM products p
-    INNER JOIN product_types pt ON p.id_product_type=p.id_product_type
+    INNER JOIN product_types pt ON p.id_product_type=pt.id_product_type
     INNER JOIN reviews r ON p.id_product=r.id_product
     GROUP BY p.id_product, p.asin, pt.product_type_name
     HAVING COUNT(r.id_review) < 40
